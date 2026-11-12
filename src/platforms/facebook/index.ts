@@ -1,5 +1,6 @@
 import type { ContentScriptContext } from '#imports';
 import type { PlatformAdapter } from '@/core/platform/adapter';
+import { startAutoplayRules } from '../social/autoplay';
 import { isPlaybackLocked, onAnyVideoPlay } from '../social/player';
 import { startReelsLock } from '../social/reels';
 import { fbLive, fbSite } from './context';
@@ -29,6 +30,7 @@ export const facebookAdapter: PlatformAdapter = {
     await mountFbUi(ctx);
     startFbFeed(ctx);
     startFbSections(ctx);
+    const autoplay = startAutoplayRules(ctx, getPage);
     const reels = startReelsLock(ctx, getPage, {
       ui: fbUi,
       rootClass: FB_ROOT_CLASS.reelsLocked,
@@ -40,6 +42,7 @@ export const facebookAdapter: PlatformAdapter = {
 
     onFbNavigate(ctx, (next, prev) => {
       page = next;
+      autoplay.onNavigate(next);
       reels.onNavigate(next, prev);
       sidebarCover.onNavigate();
       storyCount.onNavigate(next, prev);
