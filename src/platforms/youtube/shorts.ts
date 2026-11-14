@@ -4,6 +4,7 @@ import { live, onContextChange } from './context';
 import type { PageInfo } from './page';
 import { ROOT_CLASS, setRootClass } from './pageStyles';
 import { lockPlayback, unlockPlayback } from './player';
+import { SEL } from './selectors';
 
 const LOCK = 'shorts-limit';
 const SCROLL_KEYS = new Set(['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp']);
@@ -15,9 +16,25 @@ function isEditable(target: EventTarget | undefined): boolean {
 }
 
 /**
+ * The event happened inside one of the Short's own panels (comments, replies,
+ * description) or another box that scrolls by itself, not on the Short.
+ */
+function inOwnScroller(e: Event): boolean {
+  for (const node of e.composedPath()) {
+    if (!(node instanceof HTMLElement)) continue;
+    if (node.matches(SEL.shortsScroller)) return false;
+    if (node.matches(SEL.shortsPanels)) return true;
+    const { overflowY } = getComputedStyle(node);
+    if ((overflowY === 'auto' || overflowY === 'scroll') && node.scrollHeight > node.clientHeight + 1) return true;
+  }
+  return false;
+}
+
+/**
  * A Shorts "session" starts when the user opens a Short from anywhere else
- * (search, home, the sidebar's Shorts button, a link). The first Short is
- * free; after `allowedScrolls` more, scrolling is locked. If a new Short
+ * (search, home, a link). The first Short is free; after `allowedScrolls`
+ * more, scrolling to the next Short is locked. This is always on. Scrolling
+ * inside a Short's comments or description still works. If a new Short
  * still slips through, it's paused behind a blocking notice.
  */
 export function startShortsBlocker(ctx: ContentScriptContext, getPage: () => PageInfo) {
@@ -26,8 +43,8 @@ export function startShortsBlocker(ctx: ContentScriptContext, getPage: () => Pag
 
   function update(): void {
     const page = getPage();
-    const { blockScrolling, allowedScrolls } = live.settings.shorts;
-    if (page.type !== 'shorts' || !blockScrolling) {
+    const { allowedScrolls } = live.settings.shorts;
+    if (page.type !== 'shorts') {
       locked = false;
       setRootClass(ROOT_CLASS.shortsLocked, false);
       unlockPlayback(LOCK);
@@ -46,6 +63,8 @@ export function startShortsBlocker(ctx: ContentScriptContext, getPage: () => Pag
   const block = (e: Event) => {
     if (!locked || getPage().type !== 'shorts') return;
     if (e instanceof KeyboardEvent && (!SCROLL_KEYS.has(e.key) || isEditable(e.composedPath()[0]))) return;
+    // Comments, replies and the description scroll normally.
+    if (inOwnScroller(e)) return;
     e.preventDefault();
     e.stopImmediatePropagation();
     if (Date.now() - overlay.get().shortsBlockedAt >= TOAST_REFRESH_MS) overlay.set({ shortsBlockedAt: Date.now() });

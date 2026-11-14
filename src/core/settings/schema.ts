@@ -22,8 +22,6 @@ export interface AllowListEntry extends ChannelRef {
 
 export interface Settings {
   shorts: {
-    /** Block scrolling from one Short to the next. */
-    blockScrolling: boolean;
     /** How many Shorts the user may scroll past the first one. */
     allowedScrolls: number;
   };

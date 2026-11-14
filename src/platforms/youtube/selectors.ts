@@ -68,6 +68,15 @@ export const SEL = {
   ],
   shortsScroller: 'ytd-shorts #shorts-inner-container',
   shortsNavButtons: 'ytd-shorts #navigation-button-up, ytd-shorts #navigation-button-down, ytd-shorts .navigation-container',
+  /** A Short's own panels (comments, replies, description), which scroll by themselves. */
+  shortsPanels: 'ytd-shorts ytd-engagement-panel-section-list-renderer, ytd-shorts #shorts-panel-container, ytd-shorts #engagement-panel',
+  /** The "Shorts" entry in the full sidebar and in the narrow icon-only one. */
+  sidebarShorts: [
+    'ytd-guide-entry-renderer:has(a#endpoint[title="Shorts"])',
+    'ytd-guide-entry-renderer:has(a[href^="/shorts"])',
+    'ytd-mini-guide-entry-renderer[aria-label="Shorts"]',
+    'ytd-mini-guide-entry-renderer:has(a[href^="/shorts"])',
+  ].join(', '),
 } as const;
 
 export function queryFirst<T extends Element = HTMLElement>(

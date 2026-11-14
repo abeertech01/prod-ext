@@ -64,6 +64,9 @@ ${when(ROOT_CLASS.noAutoplay, SEL.inlinePreview)} { display: none !important; }
 
 ${when(ROOT_CLASS.shortsLocked, SEL.shortsScroller)} { overflow: hidden !important; scroll-snap-type: none !important; }
 ${when(ROOT_CLASS.shortsLocked, SEL.shortsNavButtons)} { display: none !important; }
+
+/* Shorts can't be browsed from the sidebar. */
+${SEL.sidebarShorts} { display: none !important; }
 `;
 
 export function injectPageStyles(): () => void {

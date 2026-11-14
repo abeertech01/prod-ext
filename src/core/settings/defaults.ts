@@ -142,7 +142,6 @@ export const DEFAULT_SELF_HELP_RULES = [
 
 export const DEFAULT_SETTINGS: Settings = {
   shorts: {
-    blockScrolling: true,
     allowedScrolls: 0,
   },
   filter: {

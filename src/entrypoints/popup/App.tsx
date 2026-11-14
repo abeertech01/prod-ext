@@ -68,11 +68,6 @@ export function App() {
             checked={settings.filter.enabled}
             onChange={(enabled) => update((s) => ({ ...s, filter: { ...s.filter, enabled } }))}
           />
-          <Toggle
-            label="Block Shorts scrolling"
-            checked={settings.shorts.blockScrolling}
-            onChange={(blockScrolling) => update((s) => ({ ...s, shorts: { ...s.shorts, blockScrolling } }))}
-          />
         </div>
       </section>
 
