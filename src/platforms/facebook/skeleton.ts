@@ -69,9 +69,33 @@ function place(skeleton: HTMLElement): void {
   skeleton.hidden = false;
 }
 
+/**
+ * Set in Facebook's own storage while Facebook is switched off in the popup. The skeleton
+ * goes up before the extension's settings can be read, so this is how it knows to stay away.
+ */
+const OFF_KEY = 'ff-fb-off';
+
+function skeletonAllowed(): boolean {
+  try {
+    return localStorage.getItem(OFF_KEY) !== '1';
+  } catch {
+    return true;
+  }
+}
+
+/** Remember whether Facebook's rules are on, for the next page load's skeleton. */
+export function setSkeletonAllowed(on: boolean): void {
+  try {
+    if (on) localStorage.removeItem(OFF_KEY);
+    else localStorage.setItem(OFF_KEY, '1');
+  } catch {
+    // Storage blocked: the skeleton still ends as soon as the settings are read.
+  }
+}
+
 /** Runs as the page starts loading, before Facebook draws anything. */
 export function startSkeleton(): void {
-  if (!isHome() || document.getElementById(SKELETON_ID)) return;
+  if (!isHome() || !skeletonAllowed() || document.getElementById(SKELETON_ID)) return;
   const root = document.documentElement;
   root.classList.add(ROOT_CLASS);
 

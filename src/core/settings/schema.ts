@@ -20,7 +20,11 @@ export interface AllowListEntry extends ChannelRef {
   addedAt: number;
 }
 
+export type PlatformId = 'youtube' | 'facebook' | 'instagram';
+
 export interface Settings {
+  /** Which sites the rules apply to. A site that's off is left exactly as it is. */
+  platforms: Record<PlatformId, boolean>;
   shorts: {
     /** How many Shorts the user may scroll past the first one. */
     allowedScrolls: number;

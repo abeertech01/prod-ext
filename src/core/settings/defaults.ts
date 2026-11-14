@@ -141,6 +141,7 @@ export const DEFAULT_SELF_HELP_RULES = [
 ];
 
 export const DEFAULT_SETTINGS: Settings = {
+  platforms: { youtube: true, facebook: true, instagram: true },
   shorts: {
     allowedScrolls: 0,
   },
