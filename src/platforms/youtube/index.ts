@@ -5,13 +5,14 @@ import { startAutoplayBlocker } from './autoplay';
 import { startBookmarkButtons } from './bookmarks';
 import { loadContext } from './context';
 import { startFeedFilter } from './feedFilter';
+import { startHomeBookmarks } from './homeBookmarks';
 import { onNavigate, readPage, type PageInfo } from './page';
 import { injectPageStyles } from './pageStyles';
 import { isPlaybackLocked, onAnyVideoPlay } from './player';
 import { startShortsBlocker } from './shorts';
 import { syncSubscriptions, syncSubscriptionsIfStale } from './subscriptions';
 import { startTrustPrompt } from './trust';
-import { mountUi } from './ui';
+import { mountHomeBookmarks, mountUi } from './ui';
 
 export const youtubeAdapter: PlatformAdapter = {
   id: 'youtube',
@@ -28,15 +29,18 @@ export const youtubeAdapter: PlatformAdapter = {
     });
 
     await mountUi(ctx);
+    mountHomeBookmarks(ctx);
     startFeedFilter(ctx, getPage);
     startAutoplayBlocker(ctx, getPage);
     startTrustPrompt(ctx, getPage);
     startBookmarkButtons(ctx);
     const shorts = startShortsBlocker(ctx, getPage);
+    const homeBookmarks = startHomeBookmarks(ctx, getPage);
 
     onNavigate(ctx, (next, prev) => {
       page = next;
       shorts.onNavigate(next, prev);
+      homeBookmarks.onNavigate(next, prev);
     });
 
     const removeSync = onMessage('syncSubscriptions', () => syncSubscriptions());

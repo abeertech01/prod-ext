@@ -69,6 +69,11 @@ export interface Settings {
     enabled: boolean;
     /** Browser bookmark folders offered when the button is clicked, in this order. */
     folderIds: string[];
+    /**
+     * What the YouTube home page shows: `mixed` = 5 random bookmarked videos, then the
+     * usual filtered suggestions; `only` = bookmarked videos only, in batches.
+     */
+    homeMode: 'mixed' | 'only';
   };
 }
 

@@ -1,3 +1,4 @@
+import { HB } from '@/ui/content/HomeBookmarks';
 import { SEL } from './selectors';
 
 /** Classes toggled on <html> to switch page-level behaviour on and off. */
@@ -8,6 +9,8 @@ export const ROOT_CLASS = {
   revealNoMatch: 'ff-reveal-nomatch',
   revealDistraction: 'ff-reveal-distraction',
   shortsLocked: 'ff-shorts-locked',
+  /** The home page shows bookmarked videos only: YouTube's suggestions are hidden. */
+  bookmarksOnly: 'ff-bookmarks-only',
 } as const;
 
 /** Class of the bookmark button added to every thumbnail. */
@@ -64,6 +67,53 @@ ${when(ROOT_CLASS.noAutoplay, SEL.inlinePreview)} { display: none !important; }
 
 ${when(ROOT_CLASS.shortsLocked, SEL.shortsScroller)} { overflow: hidden !important; scroll-snap-type: none !important; }
 ${when(ROOT_CLASS.shortsLocked, SEL.shortsNavButtons)} { display: none !important; }
+
+/* "Only bookmarks": none of YouTube's suggestions, and nothing makes it load more. */
+${when(ROOT_CLASS.bookmarksOnly, `${SEL.homeGridContents}, ${SEL.homeContinuation}, focus-filter-home-banner, focus-filter-home-end`)} { display: none !important; }
+
+/*
+ * Bookmarked videos at the top of the home feed, in YouTube's own look. They sit in the home
+ * grid, so its variables (videos per row, spacing) size the cards like YouTube's.
+ * Light colours by default; YouTube marks dark mode with html[dark].
+ */
+.${HB.root} {
+  --ff-hb-text: #0f0f0f; --ff-hb-muted: #606060; --ff-hb-chip: rgba(0, 0, 0, 0.05); --ff-hb-chip-hover: rgba(0, 0, 0, 0.1); --ff-hb-inverse: #fff;
+  align-self: stretch; box-sizing: border-box; margin: 24px 16px 8px; font-family: Roboto, Arial, sans-serif;
+}
+html[dark] .${HB.root} { --ff-hb-text: #f1f1f1; --ff-hb-muted: #aaa; --ff-hb-chip: rgba(255, 255, 255, 0.1); --ff-hb-chip-hover: rgba(255, 255, 255, 0.2); --ff-hb-inverse: #0f0f0f; }
+.${HB.header} {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+  margin: 0 calc(var(--ytd-rich-grid-item-margin, 16px) / 2) 16px;
+}
+.${HB.heading} { margin: 0; font-size: 20px; line-height: 28px; font-weight: 700; color: var(--ff-hb-text); }
+.${HB.modes} { display: flex; gap: 12px; }
+.${HB.mode} {
+  height: 32px; padding: 0 12px; border: 0; border-radius: 8px; cursor: pointer;
+  font: 500 14px/32px Roboto, Arial, sans-serif; background: var(--ff-hb-chip); color: var(--ff-hb-text);
+}
+.${HB.mode}:hover { background: var(--ff-hb-chip-hover); }
+.${HB.mode}[aria-checked="true"] { background: var(--ff-hb-text); color: var(--ff-hb-inverse); cursor: default; }
+.${HB.grid} { display: flex; flex-wrap: wrap; }
+.${HB.item} {
+  box-sizing: border-box; min-width: 0;
+  width: calc(100% / var(--ytd-rich-grid-items-per-row, 4) - var(--ytd-rich-grid-item-margin, 16px));
+  margin: 0 calc(var(--ytd-rich-grid-item-margin, 16px) / 2) var(--ytd-rich-grid-row-margin, 40px);
+}
+.${HB.thumb} { display: block; position: relative; aspect-ratio: 16 / 9; overflow: hidden; border-radius: 12px; background: var(--ff-hb-chip); }
+.${HB.thumb} img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.${HB.title} {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; margin-top: 12px;
+  font-size: 16px; line-height: 22px; font-weight: 500; color: var(--ff-hb-text); text-decoration: none; word-break: break-word;
+}
+.${HB.line} { margin-top: 4px; font-size: 14px; line-height: 20px; color: var(--ff-hb-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.${HB.note} { margin: 0 calc(var(--ytd-rich-grid-item-margin, 16px) / 2) 16px; font-size: 14px; line-height: 20px; color: var(--ff-hb-muted); }
+.${HB.footer} { display: flex; justify-content: center; margin: 8px 0 32px; }
+.${HB.footer} .${HB.note} { margin: 0; }
+.${HB.more} {
+  height: 36px; padding: 0 16px; border: 0; border-radius: 18px; cursor: pointer;
+  font: 500 14px/36px Roboto, Arial, sans-serif; background: var(--ff-hb-chip); color: var(--ff-hb-text);
+}
+.${HB.more}:hover { background: var(--ff-hb-chip-hover); }
 
 /* Shorts can't be browsed from the sidebar. */
 ${SEL.sidebarShorts} { display: none !important; }

@@ -21,7 +21,15 @@ export interface BookmarkTarget {
   title: string;
 }
 
+/** A video saved in one of the chosen bookmark folders. */
+export interface BookmarkedVideo extends BookmarkTarget {
+  /** The folder it's saved in. */
+  folder: string;
+}
+
 interface ProtocolMap {
+  /** Content → background: every video in the chosen folders; `null` without a bookmarks API (Safari). */
+  bookmarkedVideos(): BookmarkedVideo[] | null;
   /** Content → background: the chosen folders, and which of them hold this video. */
   bookmarkFolders(data: { videoId: string }): BookmarkFoldersResult;
   /** Content → background: add the video to a folder (`saved: true`) or remove it from there. */

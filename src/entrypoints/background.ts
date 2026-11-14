@@ -1,6 +1,7 @@
 import { browser } from 'wxt/browser';
 import { defineBackground } from '#imports';
 import { listFolders, pickFolders } from '@/core/bookmarks/folders';
+import { collectVideos } from '@/core/bookmarks/videos';
 import { onMessage, sendMessage, type BookmarkFoldersResult, type SyncResult } from '@/core/messaging/protocol';
 import { getSettings } from '@/core/settings/storage';
 import { videoIdFromUrl } from '@/platforms/youtube/page';
@@ -38,6 +39,15 @@ export default defineBackground(() => {
   }
 
   onMessage('bookmarkFolders', ({ data }) => folderStates(data.videoId));
+
+  // Every video in the chosen folders, for the top of the YouTube home page.
+  onMessage('bookmarkedVideos', async () => {
+    if (!browser.bookmarks) return null;
+    const { bookmarks } = await getSettings();
+    const chosen = pickFolders(listFolders(await browser.bookmarks.getTree()), bookmarks.folderIds);
+    const trees = await Promise.all(chosen.map((f) => browser.bookmarks.getSubTree(f.id).then((t) => t[0]!)));
+    return collectVideos(trees, videoIdFromUrl);
+  });
 
   onMessage('setBookmark', async ({ data: { folderId, saved, video } }) => {
     if (!browser.bookmarks) return null;

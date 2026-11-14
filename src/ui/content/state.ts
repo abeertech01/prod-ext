@@ -1,4 +1,4 @@
-import type { BookmarkFolderState, BookmarkTarget } from '@/core/messaging/protocol';
+import type { BookmarkFolderState, BookmarkTarget, BookmarkedVideo } from '@/core/messaging/protocol';
 import type { ChannelRef } from '@/core/settings/schema';
 import { createStore } from '../store';
 
@@ -33,6 +33,17 @@ export interface BookmarkMenuState {
   error: string | null;
 }
 
+/** Bookmarked videos at the top of the home page. */
+export interface HomeBookmarksState {
+  /** `unavailable`: the browser gives no bookmark access (Safari); nothing is shown. */
+  status: 'loading' | 'ready' | 'unavailable';
+  mode: 'mixed' | 'only';
+  /** Every bookmarked video, shuffled once per visit to the home page. */
+  videos: BookmarkedVideo[];
+  /** How many are on screen. */
+  shown: number;
+}
+
 export interface OverlayState {
   shorts: { scrollsLeft: number; locked: boolean; overLimit: boolean } | null;
   /** When a blocked Shorts scroll last happened; shows the "Scrolling is disabled" toast. */
@@ -43,6 +54,7 @@ export interface OverlayState {
   showDistractionReveal: boolean;
   homeFeed: HomeFeedState;
   bookmarkMenu: BookmarkMenuState | null;
+  homeBookmarks: HomeBookmarksState;
 }
 
 export const overlay = createStore<OverlayState>({
@@ -54,6 +66,7 @@ export const overlay = createStore<OverlayState>({
   showDistractionReveal: true,
   homeFeed: { phase: 'off', shown: 0, loadsLeft: 0, endReason: null },
   bookmarkMenu: null,
+  homeBookmarks: { status: 'loading', mode: 'mixed', videos: [], shown: 0 },
 });
 
 /** Wired up by the platform adapter; the UI only calls these. */
@@ -66,4 +79,6 @@ export const overlayActions = {
   toggleBookmark: (_folder: BookmarkFolderState) => {},
   closeBookmarkMenu: () => {},
   openBookmarkSettings: () => {},
+  setHomeMode: (_mode: HomeBookmarksState['mode']) => {},
+  loadMoreBookmarks: () => {},
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { browser } from 'wxt/browser';
 import { listFolders, pickFolders, searchFolders, type BookmarkFolder } from '@/core/bookmarks/folders';
 import { Button, Card, Notice, Toggle } from '@/ui/components/controls';
@@ -27,6 +27,88 @@ function FolderLabel({ folder }: { folder: BookmarkFolder }) {
       <span className="block truncate font-medium">{folder.title}</span>
       {folder.parentPath && <span className="block truncate text-[12px] text-zinc-500">{folder.parentPath}</span>}
     </span>
+  );
+}
+
+/**
+ * "New folder": a name and where to put it. The folder is created in the browser's
+ * bookmarks; `onCreated` then chooses it as a YouTube folder.
+ */
+function NewFolder({ all, onCreated }: { all: BookmarkFolder[]; onCreated: (id: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  // The Bookmarks bar (the first top-level folder) by default.
+  const [parentId, setParentId] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const parent = parentId || all.find((f) => !f.parentPath)?.id || '';
+
+  const reset = () => {
+    setOpen(false);
+    setName('');
+    setParentId('');
+    setError(null);
+  };
+
+  async function create(e: FormEvent) {
+    e.preventDefault();
+    const title = name.trim();
+    if (!title) return setError('Give the folder a name.');
+    setBusy(true);
+    try {
+      const folder = await browser.bookmarks.create({ parentId: parent, title });
+      onCreated(folder.id);
+      reset();
+    } catch {
+      setError("The folder couldn't be created there. Try another place.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <div className="py-3">
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          New folder
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <form onSubmit={(e) => void create(e)} className="space-y-2 py-3">
+      <div className="flex flex-wrap gap-2">
+        <input
+          autoFocus
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Folder name"
+          aria-label="New folder name"
+          className="min-w-0 flex-1 rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-[14px] dark:border-zinc-600 dark:bg-zinc-900"
+        />
+        <select
+          value={parent}
+          onChange={(e) => setParentId(e.target.value)}
+          aria-label="Put the new folder in"
+          className="min-w-0 max-w-[260px] rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-[14px] dark:border-zinc-600 dark:bg-zinc-900"
+        >
+          {all.map((f) => (
+            <option key={f.id} value={f.id}>
+              {f.parentPath ? `${f.parentPath} / ${f.title}` : f.title}
+            </option>
+          ))}
+        </select>
+      </div>
+      {error && <p className="text-[13px] text-rose-600">{error}</p>}
+      <div className="flex gap-2">
+        <Button type="submit" disabled={busy}>
+          Create folder
+        </Button>
+        <Button variant="secondary" onClick={reset}>
+          Cancel
+        </Button>
+      </div>
+    </form>
   );
 }
 
@@ -78,6 +160,12 @@ export function BookmarksSection({ settings, update }: SectionProps) {
                   </li>
                 ))}
               </ul>
+            )}
+            {all && (
+              <NewFolder
+                all={all}
+                onCreated={(id) => update((s) => ({ ...s, bookmarks: { ...s.bookmarks, folderIds: [...s.bookmarks.folderIds, id] } }))}
+              />
             )}
           </Card>
 

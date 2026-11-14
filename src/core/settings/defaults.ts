@@ -178,5 +178,6 @@ export const DEFAULT_SETTINGS: Settings = {
   bookmarks: {
     enabled: true,
     folderIds: [],
+    homeMode: 'mixed',
   },
 };
