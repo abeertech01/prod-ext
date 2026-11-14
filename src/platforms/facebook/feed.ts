@@ -2,7 +2,7 @@ import type { ContentScriptContext } from '#imports';
 import { FACEBOOK_FEED, postKey } from '@/core/social/daily';
 import type { SocialPage } from '../social/page';
 import { fbLive, fbSite } from './context';
-import { COVER, FB_COVER_ATTR, FB_COVER_COUNT_ATTR, FB_COVER_DONE_ATTR, FB_HIDDEN } from './pageStyles';
+import { COVER, FB_COVER_ATTR, FB_COVER_COUNT_ATTR, FB_COVER_DONE_ATTR, FB_HIDDEN, FB_LOCK_ATTR } from './pageStyles';
 import { FB, LABEL } from './selectors';
 
 type UnitKind = 'post' | 'sponsored' | 'suggested' | 'pymk' | 'groups' | 'reels' | 'stories' | 'empty';
@@ -103,12 +103,16 @@ function findFeeds(): HTMLElement[] {
 /** Facebook fills posts in after inserting them; give them a moment before deciding. */
 const SETTLE_MS = 600;
 
+/** The label on the slim locked card that replaces an unwanted feed item. */
+const LOCK_LABEL = 'Distraction hidden';
+
 /**
- * Hides, in every feed: sponsored posts, suggested posts, posts from groups,
+ * Locks, in every feed: sponsored posts, suggested posts, posts from groups,
  * pages and people the user doesn't follow, suggested pages, and Reels rows
- * that scroll sideways (a single Reel shared as a post stays). "People you
- * may know" is hidden unless turned on in settings; group suggestions show
- * unless turned off.
+ * that scroll sideways (a single Reel shared as a post stays). Locked items
+ * keep their place behind a slim card, so the feed still grows and Facebook
+ * keeps loading more. "People you may know" is hidden unless turned on in
+ * settings; group suggestions show unless turned off.
  */
 export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage): void {
   const firstSeen = new WeakMap<Element, number>();
@@ -123,13 +127,23 @@ export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage
   function hide(el: HTMLElement, reason: string): void {
     delete el.dataset.ffFbPending;
     el.removeAttribute(FB_COVER_ATTR);
+    el.removeAttribute(FB_LOCK_ATTR);
     if (el.dataset.ffFb !== reason) el.dataset.ffFb = reason;
   }
 
   function show(el: HTMLElement): void {
     delete el.dataset.ffFbPending;
     el.removeAttribute(FB_COVER_ATTR);
+    el.removeAttribute(FB_LOCK_ATTR);
     if (el.dataset.ffFb) delete el.dataset.ffFb;
+  }
+
+  /** Behind a slim card that can't be opened, keeping its place in the feed. */
+  function lock(el: HTMLElement, label: string): void {
+    delete el.dataset.ffFbPending;
+    el.removeAttribute(FB_COVER_ATTR);
+    if (el.dataset.ffFb) delete el.dataset.ffFb;
+    if (el.getAttribute(FB_LOCK_ATTR) !== label) el.setAttribute(FB_LOCK_ATTR, label);
   }
 
   /** Today's opened posts, and the day's limit. */
@@ -145,6 +159,7 @@ export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage
   function cover(el: HTMLElement): void {
     delete el.dataset.ffFbPending;
     if (el.dataset.ffFb) delete el.dataset.ffFb;
+    el.removeAttribute(FB_LOCK_ATTR);
     const count = opened();
     const done = count >= LIMIT;
     setAttr(el, FB_COVER_ATTR, done ? "Today's posts are done" : 'Show post');
@@ -194,9 +209,7 @@ export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage
           // A post can still turn out to be sponsored or suggested while it loads; anything else is final.
           if (kind !== 'empty' && (kind !== 'post' || settled)) decided.set(el, kind);
         }
-        if (kind === 'sponsored') hide(el, FB_HIDDEN.sponsored);
-        else if (kind === 'suggested') hide(el, FB_HIDDEN.suggested);
-        else if (kind === 'reels') hide(el, FB_HIDDEN.reels);
+        if (kind === 'sponsored' || kind === 'suggested' || kind === 'reels') lock(el, LOCK_LABEL);
         else if (kind === 'stories') (noStories ? hide(el, FB_HIDDEN.stories) : show(el));
         else if (kind === 'pymk') (peopleYouMayKnow ? show(el) : hide(el, FB_HIDDEN.pymk));
         else if (kind === 'groups') (groupSuggestions ? show(el) : hide(el, FB_HIDDEN.groups));
@@ -232,6 +245,12 @@ export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage
     'click',
     (e) => {
       const el = e.target instanceof HTMLElement ? e.target : null;
+      // A locked card opens nothing.
+      if (el?.hasAttribute(FB_LOCK_ATTR)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return;
+      }
       if (!el?.hasAttribute(FB_COVER_ATTR)) return;
       e.preventDefault();
       e.stopImmediatePropagation();

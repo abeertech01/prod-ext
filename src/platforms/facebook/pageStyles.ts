@@ -31,6 +31,14 @@ export const FB_COVER_COUNT_ATTR = 'data-ff-fb-cover-count';
 /** Set on a cover once today's posts are used up: the button no longer opens anything. */
 export const FB_COVER_DONE_ATTR = 'data-ff-fb-cover-done';
 
+/**
+ * An unwanted feed item (ad, suggested post, Reels row) behind a slim locked card that
+ * can't be opened. It keeps its place in the feed, so the feed still grows and Facebook
+ * keeps loading more. The attribute's value is the card's label.
+ */
+export const FB_LOCK_ATTR = 'data-ff-fb-locked';
+export const LOCK_HEIGHT = 100;
+
 /** The "Show post" button in the middle of a cover. */
 export const COVER = { height: 460, gap: 12, buttonWidth: 120, buttonHeight: 36 } as const;
 
@@ -58,6 +66,15 @@ const css = `
   font: 600 15px/${COVER.buttonHeight}px system-ui, -apple-system, 'Segoe UI', sans-serif; cursor: pointer;
 }
 [${FB_COVER_ATTR}][${FB_COVER_DONE_ATTR}]::after { cursor: default; opacity: 0.6; }
+[${FB_LOCK_ATTR}] { position: relative !important; height: ${LOCK_HEIGHT}px !important; overflow: hidden !important; }
+[${FB_LOCK_ATTR}] > * { opacity: 0 !important; pointer-events: none !important; }
+[${FB_LOCK_ATTR}]::before {
+  content: attr(${FB_LOCK_ATTR}); position: absolute; inset: 0 0 ${COVER.gap}px 0; border-radius: 8px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff4d6; border: 1px solid #f2d68a; color: #7a5300;
+  font: 500 13px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+html.__fb-dark-mode [${FB_LOCK_ATTR}]::before { background: #2e2710; border-color: #4f4118; color: #f2c94c; }
 html.${FB_ROOT_CLASS.reelsLocked} :is(${FB.reelNavButtons}) { display: none !important; }
 `;
 
