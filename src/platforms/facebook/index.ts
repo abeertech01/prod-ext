@@ -8,6 +8,7 @@ import { startFbFeed } from './feed';
 import { onFbNavigate, readFbPage, type FbPage } from './page';
 import { FB_ROOT_CLASS, injectFbStyles } from './pageStyles';
 import { startFbSections } from './sections';
+import { endSkeleton } from './skeleton';
 import { startStoriesSidebarCover } from './storiesSidebar';
 import { startFbStoryCount } from './storyCount';
 import { fbUi, mountFbUi } from './ui';
@@ -28,7 +29,7 @@ export const facebookAdapter: PlatformAdapter = {
     fbUi.actions.leave = () => location.assign('/');
 
     await mountFbUi(ctx);
-    startFbFeed(ctx);
+    startFbFeed(ctx, getPage);
     startFbSections(ctx);
     const autoplay = startAutoplayRules(ctx, getPage);
     const reels = startReelsLock(ctx, getPage, {
@@ -47,5 +48,9 @@ export const facebookAdapter: PlatformAdapter = {
       sidebarCover.onNavigate();
       storyCount.onNavigate(next, prev);
     });
+
+    // Posts are covered and watched stories removed: take down the loading skeleton
+    // once this frame is painted with them.
+    requestAnimationFrame(() => endSkeleton());
   },
 };

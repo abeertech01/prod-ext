@@ -50,6 +50,8 @@ export const LABEL = {
     'suggested videos',
     'videos for you',
   ],
+  /** Heading of the Stories box Facebook puts inside the feed. */
+  storiesSection: ['stories'],
   /** Headings of Reels rows that scroll sideways. */
   reelsSections: ['reels', 'reels and short videos', 'reels for you'],
   /** Trending and suggested-video panels. */

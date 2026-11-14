@@ -158,6 +158,7 @@ function updateStoriesRow(onHome: boolean): void {
   onHome &&= mode !== 'unlimited';
   const names = (daily.storyNames ?? []).filter(Boolean).map((n) => n.toLowerCase());
   const mine = onHome ? ownName()?.toLowerCase() : undefined;
+  const rows = new Set<HTMLElement>();
   for (const a of document.querySelectorAll<HTMLAnchorElement>('a[href*="/stories/"]')) {
     const bucket = storyBucket(a);
     if (!bucket || bucket === 'create') continue;
@@ -169,6 +170,19 @@ function updateStoriesRow(onHome: boolean): void {
     const hide = onHome && !own && (full || names.some((n) => text.includes(n)));
     if (hide) card.dataset.ffFb = FB_HIDDEN.story;
     else if (card.dataset.ffFb === FB_HIDDEN.story) delete card.dataset.ffFb;
+    if (card.parentElement) rows.add(card.parentElement);
+  }
+  // Facebook's grey loading placeholder: a box in the row with no link or button. With every
+  // card removed it slides into view and keeps pulsing, waiting for cards that won't come.
+  for (const row of rows) {
+    // Only the Stories row: several story cards side by side (a post's header links to one story at most).
+    const cards = [...row.children].filter((c) => c.querySelector('a[href*="/stories/"]') || c.matches('a[href*="/stories/"]'));
+    if (cards.length < 2) continue;
+    for (const child of row.children) {
+      if (!(child instanceof HTMLElement) || child.querySelector('a[href], [role="button"], button') || child.matches('a[href], [role="button"], button')) continue;
+      if (onHome && full) child.dataset.ffFb = FB_HIDDEN.story;
+      else if (child.dataset.ffFb === FB_HIDDEN.story) delete child.dataset.ffFb;
+    }
   }
 }
 

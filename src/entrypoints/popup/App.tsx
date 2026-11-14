@@ -1,7 +1,22 @@
 import { browser } from 'wxt/browser';
 import { Button, Toggle } from '@/ui/components/controls';
-import type { StoriesSetting } from '@/core/social/daily';
+import { FACEBOOK_FEED, type StoriesSetting } from '@/core/social/daily';
 import { useFacebookDaily, useSettings } from '@/ui/hooks/useStorage';
+
+/** Facebook posts opened today with "Show post". */
+function FacebookPosts() {
+  const opened = useFacebookDaily()?.openedPosts ?? 0;
+  return (
+    <section className="mt-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-[13px] font-medium">Facebook posts today</h2>
+        <span className="text-[13px] tabular-nums text-zinc-500">
+          <span className="font-semibold text-zinc-900 dark:text-zinc-100">{opened}</span> of {FACEBOOK_FEED.dailyPosts} opened
+        </span>
+      </div>
+    </section>
+  );
+}
 
 /** People whose Facebook stories were opened today. */
 function FacebookStories({ setting }: { setting: StoriesSetting }) {
@@ -61,6 +76,7 @@ export function App() {
         </div>
       </section>
 
+      <FacebookPosts />
       <FacebookStories setting={settings.facebook.stories} />
 
       <div className="mt-3 flex justify-end">

@@ -14,13 +14,13 @@ describe('feed allowance', () => {
     expect(plan).toEqual({ visible: 5, newlySeen: keys(5), capped: true });
   });
 
-  it('each "Load more" adds 5, up to 20 a day with 3 clicks', () => {
+  it('each "Load more" adds 5, up to 35 a day with 6 clicks', () => {
     let daily = emptyDaily(day);
-    expect(loadsLeft(daily)).toBe(3);
-    for (let i = 0; i < 3; i++) daily = loadMore(daily);
-    expect(daily.unlockedPosts).toBe(20);
+    expect(loadsLeft(daily)).toBe(6);
+    for (let i = 0; i < 6; i++) daily = loadMore(daily);
+    expect(daily.unlockedPosts).toBe(35);
     expect(loadsLeft(daily)).toBe(0);
-    expect(loadMore(daily).unlockedPosts).toBe(20);
+    expect(loadMore(daily).unlockedPosts).toBe(35);
   });
 
   it('posts already seen today show again without using the allowance', () => {

@@ -4,7 +4,7 @@ export interface FeedLimits {
   batch: number;
 }
 
-export const FACEBOOK_FEED: FeedLimits = { dailyPosts: 20, batch: 5 };
+export const FACEBOOK_FEED: FeedLimits = { dailyPosts: 35, batch: 5 };
 export const INSTAGRAM_FEED: FeedLimits = { dailyPosts: 10, batch: 5 };
 
 
@@ -20,6 +20,8 @@ export interface DailyAllowance {
   storyProfiles: string[];
   /** Facebook: their display names, in the same order. */
   storyNames?: string[];
+  /** Facebook: posts the user opened today with "Show post". */
+  openedPosts?: number;
 }
 
 export interface StoriesSetting {
