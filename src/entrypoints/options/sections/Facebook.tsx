@@ -32,6 +32,11 @@ export function FacebookSection({ settings, update }: SectionProps) {
         <Toggle label="Show group suggestions" checked={fb.groupSuggestions} onChange={(groupSuggestions) => setFb({ groupSuggestions })} />
       </Card>
 
+      <Card title="Menus" description="Video is always hidden from the menus. Marketplace and Gaming are hidden too, unless you bring them back.">
+        <Toggle label="Show Marketplace" checked={fb.marketplace} onChange={(marketplace) => setFb({ marketplace })} />
+        <Toggle label="Show Gaming" checked={fb.gaming} onChange={(gaming) => setFb({ gaming })} />
+      </Card>
+
       <Card title="Always on">
         <ul className="list-disc space-y-1.5 py-3 pl-5 text-[13px] leading-5 text-zinc-600 dark:text-zinc-300">
           <li>Works with Facebook set to English.</li>

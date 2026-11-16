@@ -69,7 +69,7 @@ ${when(ROOT_CLASS.shortsLocked, SEL.shortsScroller)} { overflow: hidden !importa
 ${when(ROOT_CLASS.shortsLocked, SEL.shortsNavButtons)} { display: none !important; }
 
 /* "Only bookmarks": none of YouTube's suggestions, and nothing makes it load more. */
-${when(ROOT_CLASS.bookmarksOnly, `${SEL.homeGridContents}, ${SEL.homeContinuation}, focus-filter-home-banner, focus-filter-home-end`)} { display: none !important; }
+${when(ROOT_CLASS.bookmarksOnly, `${SEL.homeGridContents}, ${SEL.homeContinuation}, focus-filter-home-end`)} { display: none !important; }
 
 /*
  * Bookmarked videos at the top of the home feed, in YouTube's own look. They sit in the home
@@ -106,9 +106,7 @@ html[dark] .${HB.root} { --ff-hb-text: #f1f1f1; --ff-hb-muted: #aaa; --ff-hb-chi
   font-size: 16px; line-height: 22px; font-weight: 500; color: var(--ff-hb-text); text-decoration: none; word-break: break-word;
 }
 .${HB.line} { margin-top: 4px; font-size: 14px; line-height: 20px; color: var(--ff-hb-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.${HB.note} { margin: 0 calc(var(--ytd-rich-grid-item-margin, 16px) / 2) 16px; font-size: 14px; line-height: 20px; color: var(--ff-hb-muted); }
 .${HB.footer} { display: flex; justify-content: center; margin: 8px 0 32px; }
-.${HB.footer} .${HB.note} { margin: 0; }
 .${HB.more} {
   height: 36px; padding: 0 16px; border: 0; border-radius: 18px; cursor: pointer;
   font: 500 14px/36px Roboto, Arial, sans-serif; background: var(--ff-hb-chip); color: var(--ff-hb-text);

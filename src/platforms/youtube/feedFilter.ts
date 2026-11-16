@@ -1,3 +1,4 @@
+import { onMessage, type HiddenVideos } from '@/core/messaging/protocol';
 import type { ContentScriptContext } from '#imports';
 import { isAllowListed, normalizeHandle } from '@/core/filter/allowlist';
 import { decide, type FilterDecision } from '@/core/filter/engine';
@@ -261,6 +262,24 @@ export function startFeedFilter(ctx: ContentScriptContext, getPage: () => PageIn
     schedule();
   };
   overlayActions.setReveal = setReveal;
+
+  // The counts and the "show" switches live in the popup.
+  const hidden = (): HiddenVideos => {
+    const { feed, reveal } = overlay.get();
+    return {
+      noMatch: feed.home.noMatch + feed.related.noMatch,
+      distraction: feed.home.distraction + feed.related.distraction,
+      reveal,
+      canRevealDistraction: live.settings.filter.showDistractionReveal,
+    };
+  };
+  ctx.onInvalidated(onMessage('hiddenVideos', hidden));
+  ctx.onInvalidated(
+    onMessage('revealHidden', ({ data }) => {
+      setReveal(data.kind, data.value);
+      return hidden();
+    }),
+  );
   try {
     const saved = JSON.parse(sessionStorage.getItem(REVEAL_KEY) ?? 'null');
     if (saved) {

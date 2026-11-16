@@ -1,8 +1,79 @@
+import { useEffect, useState } from 'react';
 import { browser } from 'wxt/browser';
+import { sendMessage, type HiddenVideos } from '@/core/messaging/protocol';
 import { Button, Toggle } from '@/ui/components/controls';
 import { FACEBOOK_FEED, type StoriesSetting } from '@/core/social/daily';
 import type { PlatformId } from '@/core/settings/schema';
 import { useFacebookDaily, useSettings } from '@/ui/hooks/useStorage';
+
+/**
+ * What the filter hid on the YouTube page in the current tab, with a "Show" switch for each
+ * kind. Shown only while the current tab is a YouTube page.
+ */
+function YouTubeHidden() {
+  const [tabId, setTabId] = useState<number | null>(null);
+  const [hidden, setHidden] = useState<HiddenVideos | null>(null);
+
+  useEffect(() => {
+    let stop = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    void (async () => {
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+      if (!tab?.id || !tab.url || new URL(tab.url).hostname !== 'www.youtube.com') return;
+      const id = tab.id;
+      setTabId(id);
+      // Kept current while the popup is open, as the page loads more videos.
+      const poll = async () => {
+        try {
+          const next = await sendMessage('hiddenVideos', undefined, id);
+          if (!stop) setHidden(next);
+        } catch {
+          // The page's script isn't running (e.g. the tab was open before the extension).
+        }
+        if (!stop) timer = setTimeout(poll, 1000);
+      };
+      void poll();
+    })();
+    return () => {
+      stop = true;
+      clearTimeout(timer);
+    };
+  }, []);
+
+  if (tabId === null || !hidden) return null;
+  const reveal = (kind: 'noMatch' | 'distraction') =>
+    void sendMessage('revealHidden', { kind, value: !hidden.reveal[kind] }, tabId).then(setHidden, () => {});
+  const rows = [
+    { kind: 'noMatch' as const, label: 'Hidden by filter', count: hidden.noMatch, canShow: true },
+    { kind: 'distraction' as const, label: 'Distracting videos hidden', count: hidden.distraction, canShow: hidden.canRevealDistraction },
+  ];
+
+  return (
+    <section className="mt-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+      <h2 className="text-[13px] font-medium">YouTube videos on this page</h2>
+      {hidden.noMatch + hidden.distraction === 0 ? (
+        <p className="mt-1 text-[12px] leading-5 text-zinc-500">Nothing hidden yet.</p>
+      ) : (
+        <div className="mt-1 flex flex-col">
+          {rows
+            .filter((r) => r.count > 0)
+            .map((r) => (
+              <div key={r.kind} className="flex items-center justify-between py-1 text-[13px]">
+                <span className="text-zinc-600 dark:text-zinc-300">
+                  {r.label} <span className="font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">{r.count}</span>
+                </span>
+                {r.canShow && (
+                  <button type="button" className="text-[13px] font-semibold text-teal-600 hover:underline" onClick={() => reveal(r.kind)}>
+                    {hidden.reveal[r.kind] ? 'Hide again' : 'Show'}
+                  </button>
+                )}
+              </div>
+            ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 /** Facebook posts opened today with "Show post". */
 function FacebookPosts() {
@@ -41,11 +112,7 @@ function FacebookStories({ setting }: { setting: StoriesSetting }) {
         </span>
       </div>
       {people.length > 0 && (
-        <ol className="mt-2 list-decimal space-y-0.5 pl-5 text-[12px] leading-5 text-zinc-600 dark:text-zinc-300">
-          {people.map((key, i) => (
-            <li key={key}>{names[i] || key}</li>
-          ))}
-        </ol>
+        <p className="mt-2 text-[12px] leading-5 text-zinc-600 dark:text-zinc-300">{people.map((key, i) => names[i] || key).join(', ')}</p>
       )}
     </section>
   );
@@ -83,15 +150,7 @@ export function App() {
         <p className="pb-3 text-[12px] leading-5 text-zinc-500">When a site is off, it works as usual. Its open tabs reload to apply the change.</p>
       </section>
 
-      {platforms.youtube && (
-        <section className="mt-3 rounded-xl border border-zinc-200 bg-white px-4 py-1 dark:border-zinc-800 dark:bg-zinc-900">
-          <Toggle
-            label="YouTube video filtering"
-            checked={settings.filter.enabled}
-            onChange={(enabled) => update((s) => ({ ...s, filter: { ...s.filter, enabled } }))}
-          />
-        </section>
-      )}
+      {platforms.youtube && <YouTubeHidden />}
 
       {platforms.facebook && (
         <>

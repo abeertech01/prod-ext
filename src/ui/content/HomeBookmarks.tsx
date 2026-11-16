@@ -18,7 +18,6 @@ export const HB = {
   thumb: 'ff-hb-thumb',
   title: 'ff-hb-title',
   line: 'ff-hb-line',
-  note: 'ff-hb-note',
   footer: 'ff-hb-footer',
   more: 'ff-hb-more',
 } as const;
@@ -95,15 +94,11 @@ export function HomeBookmarks() {
         </div>
       )}
 
-      {mode === 'only' && status === 'ready' && videos.length > 0 && (
+      {mode === 'only' && status === 'ready' && left > 0 && (
         <div className={HB.footer}>
-          {left > 0 ? (
-            <button type="button" className={HB.more} onClick={() => overlayActions.loadMoreBookmarks()}>
-              Load more · {left} left
-            </button>
-          ) : (
-            <p className={HB.note}>That's all {videos.length === 1 ? 'your bookmarked video' : `${videos.length} of your bookmarked videos`}.</p>
-          )}
+          <button type="button" className={HB.more} onClick={() => overlayActions.loadMoreBookmarks()}>
+            Load more
+          </button>
         </div>
       )}
     </>

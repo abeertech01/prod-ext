@@ -27,6 +27,15 @@ export interface BookmarkedVideo extends BookmarkTarget {
   folder: string;
 }
 
+/** Videos the filter hid on a YouTube tab's current page, and whether each kind is shown anyway. */
+export interface HiddenVideos {
+  noMatch: number;
+  distraction: number;
+  reveal: { noMatch: boolean; distraction: boolean };
+  /** The user allows showing distracting videos (a setting). */
+  canRevealDistraction: boolean;
+}
+
 interface ProtocolMap {
   /** Content → background: every video in the chosen folders; `null` without a bookmarks API (Safari). */
   bookmarkedVideos(): BookmarkedVideo[] | null;
@@ -38,6 +47,10 @@ interface ProtocolMap {
   openSettings(data: { section: string }): void;
   /** Options → background: sync subscriptions through an open YouTube tab. */
   requestSubscriptionSync(): SyncResult;
+  /** Popup → content (YouTube tab): what the filter hid on this page. */
+  hiddenVideos(): HiddenVideos;
+  /** Popup → content (YouTube tab): show one kind of hidden video anyway, or hide it again. */
+  revealHidden(data: { kind: 'noMatch' | 'distraction'; value: boolean }): HiddenVideos;
   /** Background → content (YouTube tab): fetch and store subscriptions. */
   syncSubscriptions(): SyncResult;
 }

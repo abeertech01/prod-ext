@@ -29,7 +29,9 @@ export const facebookAdapter: PlatformAdapter = {
     fbUi.actions.leave = () => location.assign('/');
 
     await mountFbUi(ctx);
-    startFbFeed(ctx, getPage);
+    // The loading skeleton comes down once the home feed's first posts are covered,
+    // after that frame is painted with them.
+    startFbFeed(ctx, getPage, () => requestAnimationFrame(() => endSkeleton()));
     startFbSections(ctx);
     const autoplay = startAutoplayRules(ctx, getPage);
     const reels = startReelsLock(ctx, getPage, {
@@ -48,9 +50,5 @@ export const facebookAdapter: PlatformAdapter = {
       sidebarCover.onNavigate();
       storyCount.onNavigate(next, prev);
     });
-
-    // Posts are covered and watched stories removed: take down the loading skeleton
-    // once this frame is painted with them.
-    requestAnimationFrame(() => endSkeleton());
   },
 };

@@ -39,6 +39,15 @@ export const FB_COVER_DONE_ATTR = 'data-ff-fb-cover-done';
 export const FB_LOCK_ATTR = 'data-ff-fb-locked';
 export const LOCK_HEIGHT = 100;
 
+/**
+ * Set on each feed once it's found. Every item inside a feed stays invisible until it's
+ * been checked and given a state (shown, covered, locked or hidden), so an item Facebook
+ * adds or fills in between checks can never show for even one frame.
+ */
+export const FB_FEED_ATTR = 'data-ff-fb-feed';
+/** A checked feed item that may be seen as it is. */
+export const FB_OK_ATTR = 'data-ff-fb-ok';
+
 /** The "Show post" button in the middle of a cover. */
 export const COVER = { height: 460, gap: 12, buttonWidth: 120, buttonHeight: 36 } as const;
 
@@ -50,6 +59,7 @@ export const COVER = { height: 460, gap: 12, buttonWidth: 120, buttonHeight: 36 
 const css = `
 [data-ff-fb] { display: none !important; }
 [data-ff-fb-pending] { opacity: 0 !important; pointer-events: none !important; }
+[${FB_FEED_ATTR}] > :not([${FB_OK_ATTR}], [${FB_COVER_ATTR}], [${FB_LOCK_ATTR}]) { opacity: 0 !important; pointer-events: none !important; }
 [${FB_COVER_ATTR}] { position: relative !important; height: ${COVER.height}px !important; overflow: hidden !important; }
 [${FB_COVER_ATTR}] > * { opacity: 0 !important; pointer-events: none !important; }
 [${FB_COVER_ATTR}]::before {

@@ -1,31 +1,8 @@
 import { useStore } from '../store';
-import { overlay, overlayActions, type Surface } from './state';
+import { overlay, overlayActions } from './state';
 
 function plural(n: number, word: string) {
   return `${n} ${word}${n === 1 ? '' : 's'}`;
-}
-
-/** The "N videos hidden by filter — show" row above a filtered feed. */
-export function FeedBanner({ surface }: { surface: Surface }) {
-  const counts = useStore(overlay, (s) => s.feed[surface]);
-  const reveal = useStore(overlay, (s) => s.reveal);
-  const showDistraction = useStore(overlay, (s) => s.showDistractionReveal);
-  const items: { key: 'noMatch' | 'distraction'; text: string }[] = [];
-  if (counts.noMatch > 0) items.push({ key: 'noMatch', text: `${plural(counts.noMatch, 'video')} hidden by filter` });
-  if (showDistraction && counts.distraction > 0) items.push({ key: 'distraction', text: `${plural(counts.distraction, 'distracting video')} hidden` });
-  if (items.length === 0) return null;
-  return (
-    <div className="my-2 flex flex-wrap gap-x-5 gap-y-1 rounded-lg px-1 py-1 font-sans text-[13px] text-zinc-500">
-      {items.map(({ key, text }) => (
-        <span key={key}>
-          {text} —{' '}
-          <button type="button" className="font-semibold text-teal-600 hover:underline" onClick={() => overlayActions.setReveal(key, !reveal[key])}>
-            {reveal[key] ? 'hide again' : 'show'}
-          </button>
-        </span>
-      ))}
-    </div>
-  );
 }
 
 /** Below the home feed: the "Load more" button, or why the feed ended. */

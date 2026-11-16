@@ -2,7 +2,7 @@ import type { ContentScriptContext } from '#imports';
 import { FACEBOOK_FEED, postKey } from '@/core/social/daily';
 import type { SocialPage } from '../social/page';
 import { fbLive, fbSite } from './context';
-import { COVER, FB_COVER_ATTR, FB_COVER_COUNT_ATTR, FB_COVER_DONE_ATTR, FB_HIDDEN, FB_LOCK_ATTR } from './pageStyles';
+import { COVER, FB_COVER_ATTR, FB_COVER_COUNT_ATTR, FB_COVER_DONE_ATTR, FB_FEED_ATTR, FB_HIDDEN, FB_LOCK_ATTR, FB_OK_ATTR } from './pageStyles';
 import { FB, LABEL } from './selectors';
 
 type UnitKind = 'post' | 'sponsored' | 'suggested' | 'pymk' | 'groups' | 'reels' | 'stories' | 'empty';
@@ -97,6 +97,7 @@ function findFeeds(): HTMLElement[] {
     const list = siblings.sort((a, b) => b.childElementCount - a.childElementCount)[0];
     if (list && list.childElementCount > 0) feeds.add(list);
   }
+  for (const feed of feeds) if (!feed.hasAttribute(FB_FEED_ATTR)) feed.setAttribute(FB_FEED_ATTR, '');
   return [...feeds];
 }
 
@@ -114,7 +115,8 @@ const LOCK_LABEL = 'Distraction hidden';
  * keeps loading more. "People you may know" is hidden unless turned on in
  * settings; group suggestions show unless turned off.
  */
-export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage): void {
+export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage, onReady: () => void): void {
+  let ready = false;
   const firstSeen = new WeakMap<Element, number>();
   // Posts the user uncovered, also by their text, in case Facebook redraws one as a new element.
   const revealed = new WeakSet<Element>();
@@ -126,6 +128,7 @@ export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage
 
   function hide(el: HTMLElement, reason: string): void {
     delete el.dataset.ffFbPending;
+    el.removeAttribute(FB_OK_ATTR);
     el.removeAttribute(FB_COVER_ATTR);
     el.removeAttribute(FB_LOCK_ATTR);
     if (el.dataset.ffFb !== reason) el.dataset.ffFb = reason;
@@ -136,11 +139,22 @@ export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage
     el.removeAttribute(FB_COVER_ATTR);
     el.removeAttribute(FB_LOCK_ATTR);
     if (el.dataset.ffFb) delete el.dataset.ffFb;
+    if (!el.hasAttribute(FB_OK_ATTR)) el.setAttribute(FB_OK_ATTR, '');
+  }
+
+  /** Not ready to be judged yet (still loading): kept invisible until it is. */
+  function wait(el: HTMLElement): void {
+    el.removeAttribute(FB_OK_ATTR);
+    el.removeAttribute(FB_COVER_ATTR);
+    el.removeAttribute(FB_LOCK_ATTR);
+    if (el.dataset.ffFb) delete el.dataset.ffFb;
+    if (el.dataset.ffFbPending === undefined) el.dataset.ffFbPending = '';
   }
 
   /** Behind a slim card that can't be opened, keeping its place in the feed. */
   function lock(el: HTMLElement, label: string): void {
     delete el.dataset.ffFbPending;
+    el.removeAttribute(FB_OK_ATTR);
     el.removeAttribute(FB_COVER_ATTR);
     if (el.dataset.ffFb) delete el.dataset.ffFb;
     if (el.getAttribute(FB_LOCK_ATTR) !== label) el.setAttribute(FB_LOCK_ATTR, label);
@@ -158,6 +172,7 @@ export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage
   /** The cover's button and the count under it, kept current as today's count changes. */
   function cover(el: HTMLElement): void {
     delete el.dataset.ffFbPending;
+    el.removeAttribute(FB_OK_ATTR);
     if (el.dataset.ffFb) delete el.dataset.ffFb;
     el.removeAttribute(FB_LOCK_ATTR);
     const count = opened();
@@ -169,7 +184,7 @@ export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage
 
   /** On the home feed every post starts covered; elsewhere posts show once checked. */
   function showPost(el: HTMLElement, settled: boolean): void {
-    if (getPage().type !== 'home') return settled ? show(el) : void (el.dataset.ffFbPending = '');
+    if (getPage().type !== 'home') return settled ? show(el) : wait(el);
     if (revealed.has(el) || (settled && revealedKeys.has(postKey(el.innerText)))) {
       revealed.add(el);
       return show(el);
@@ -198,7 +213,8 @@ export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage
     const now = Date.now();
     let waiting = false;
 
-    for (const feed of findFeeds()) {
+    const feeds = findFeeds();
+    for (const feed of feeds) {
       for (const el of feed.children) {
         if (!(el instanceof HTMLElement)) continue;
         if (!firstSeen.has(el)) firstSeen.set(el, now);
@@ -213,7 +229,9 @@ export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage
         else if (kind === 'stories') (noStories ? hide(el, FB_HIDDEN.stories) : show(el));
         else if (kind === 'pymk') (peopleYouMayKnow ? show(el) : hide(el, FB_HIDDEN.pymk));
         else if (kind === 'groups') (groupSuggestions ? show(el) : hide(el, FB_HIDDEN.groups));
-        else if (kind === 'empty') show(el);
+        // A loading placeholder that Facebook fills in later: kept invisible, so the post it
+        // becomes can't show before it's checked.
+        else if (kind === 'empty') wait(el);
         else {
           // Covered (or invisible) from the start, so a post never flashes up before it's checked.
           showPost(el, settled);
@@ -222,6 +240,11 @@ export function startFbFeed(ctx: ContentScriptContext, getPage: () => SocialPage
       }
     }
     hideRightRailAds();
+    // The page can show once the home feed has its first covered posts (other pages at once).
+    if (!ready && (getPage().type !== 'home' || feeds.some((f) => f.querySelector(`:scope > [${FB_COVER_ATTR}], :scope > [${FB_LOCK_ATTR}]`)))) {
+      ready = true;
+      onReady();
+    }
     if (waiting && timer === null) {
       timer = ctx.setTimeout(() => {
         timer = null;

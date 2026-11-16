@@ -59,6 +59,10 @@ export interface Settings {
     peopleYouMayKnow: boolean;
     /** Show group suggestions ("Your group suggestions") in the feed. */
     groupSuggestions: boolean;
+    /** Show Marketplace in the menus. */
+    marketplace: boolean;
+    /** Show Gaming in the menus. */
+    gaming: boolean;
     stories: StoriesSetting;
   };
   instagram: {

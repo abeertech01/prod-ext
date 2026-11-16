@@ -169,6 +169,8 @@ export const DEFAULT_SETTINGS: Settings = {
     reelsScrolling: false,
     peopleYouMayKnow: false,
     groupSuggestions: true,
+    marketplace: false,
+    gaming: false,
     stories: { mode: 'limited', profilesPerDay: 10 },
   },
   instagram: {

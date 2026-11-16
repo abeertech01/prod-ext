@@ -1,11 +1,20 @@
 import type { ContentScriptContext } from '#imports';
+import { fbLive, fbSite } from './context';
 import { FB_HIDDEN } from './pageStyles';
-import { DISTRACTING_PATHS, FB, LABEL } from './selectors';
+import { DISTRACTING_PATHS, FB, LABEL, OPTIONAL_PATHS } from './selectors';
 
-function isDistractingLink(a: HTMLAnchorElement): boolean {
+/** The menu paths hidden right now: always Video, plus Marketplace and Gaming unless turned on. */
+function hiddenPaths(): string[] {
+  const { marketplace, gaming } = fbLive.settings.facebook;
+  return [...DISTRACTING_PATHS, ...(marketplace ? [] : [OPTIONAL_PATHS.marketplace]), ...(gaming ? [] : [OPTIONAL_PATHS.gaming])];
+}
+
+const ALL_PATHS = [...DISTRACTING_PATHS, ...Object.values(OPTIONAL_PATHS)];
+
+function matches(a: HTMLAnchorElement, paths: string[]): boolean {
   try {
     const { pathname } = new URL(a.href, location.origin);
-    return DISTRACTING_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+    return paths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   } catch {
     return false;
   }
@@ -15,11 +24,18 @@ function hide(el: HTMLElement): void {
   if (el.dataset.ffFb !== FB_HIDDEN.section) el.dataset.ffFb = FB_HIDDEN.section;
 }
 
-/** Video/Watch, Marketplace and Gaming in the top bar and the left menu. */
+/**
+ * Video/Watch, Marketplace and Gaming in the top bar and the left menu. One the user
+ * turned back on in settings is shown again.
+ */
 function hideMenuItems(): void {
+  const hidden = hiddenPaths();
   for (const menu of document.querySelectorAll(FB.menus)) {
     for (const a of menu.querySelectorAll<HTMLAnchorElement>('a[href]')) {
-      if (isDistractingLink(a)) hide(a.closest<HTMLElement>('li') ?? a);
+      if (!matches(a, ALL_PATHS)) continue;
+      const item = a.closest<HTMLElement>('li') ?? a;
+      if (matches(a, hidden)) hide(item);
+      else if (item.dataset.ffFb === FB_HIDDEN.section) delete item.dataset.ffFb;
     }
   }
 }
@@ -41,8 +57,9 @@ function hidePanels(): void {
 }
 
 /**
- * Hides, with no setting to bring them back: the Video/Watch, Marketplace and
- * Gaming menu items, and "Trending" and suggested-video panels.
+ * Hides, with no setting to bring them back: the Video/Watch menu item, and
+ * "Trending" and suggested-video panels. Marketplace and Gaming are hidden
+ * too, unless the user turns them back on in settings.
  */
 export function startFbSections(ctx: ContentScriptContext): void {
   const scan = () => {
@@ -60,5 +77,6 @@ export function startFbSections(ctx: ContentScriptContext): void {
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
   ctx.onInvalidated(() => observer.disconnect());
+  fbSite.onChange(scan);
   scan();
 }

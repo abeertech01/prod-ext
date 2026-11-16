@@ -21,7 +21,10 @@ export const FB = {
 } as const;
 
 /** Menu links to hide (paths). */
-export const DISTRACTING_PATHS = ['/watch', '/marketplace', '/gaming'];
+/** Menu items that are always hidden. */
+export const DISTRACTING_PATHS = ['/watch'];
+/** Menu items hidden unless the user turns them back on in settings. */
+export const OPTIONAL_PATHS = { marketplace: '/marketplace', gaming: '/gaming' } as const;
 
 /** Visible labels, lower-case. */
 export const LABEL = {
