@@ -4,7 +4,7 @@ import { isAllowListed, normalizeHandle } from '@/core/filter/allowlist';
 import { decide, type FilterDecision } from '@/core/filter/engine';
 import type { ChannelRef } from '@/core/settings/schema';
 import { overlay, overlayActions, type FeedCounts, type HomeFeedState, type Surface } from '@/ui/content/state';
-import { live, onContextChange } from './context';
+import { isHomeOff, live, onContextChange } from './context';
 import { getVideoMeta } from './metadata';
 import { videoIdFromUrl, type PageInfo } from './page';
 import { ITEM_STATE, ROOT_CLASS, setRootClass } from './pageStyles';
@@ -230,7 +230,8 @@ export function startFeedFilter(ctx: ContentScriptContext, getPage: () => PageIn
     const page = getPage();
     const homeItems = [...document.querySelectorAll<HTMLElement>(SEL.homeItem)];
     const relatedItems = [...document.querySelectorAll<HTMLElement>(SEL.relatedItem)];
-    const onHome = page.type === 'home';
+    // With the home page off, nothing there is filtered, batched or looked up.
+    const onHome = page.type === 'home' && !isHomeOff();
     const relatedOn = page.type === 'watch' && !live.settings.filter.sidebarHidden;
 
     if (onHome) homeItems.forEach(processItem);

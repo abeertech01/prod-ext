@@ -1,7 +1,7 @@
 import type { ContentScriptContext } from '#imports';
 import { sendMessage, type BookmarkTarget } from '@/core/messaging/protocol';
 import { overlay, overlayActions } from '@/ui/content/state';
-import { live, onContextChange } from './context';
+import { isHomeOff, live, onContextChange } from './context';
 import { videoIdFromUrl } from './page';
 import { BOOKMARK_BUTTON } from './pageStyles';
 import { SEL, textOf } from './selectors';
@@ -155,9 +155,11 @@ export function startBookmarkButtons(ctx: ContentScriptContext): void {
 
   function scan(): void {
     const enabled = live.settings.bookmarks.enabled;
+    const homeOff = isHomeOff();
     for (const thumb of document.querySelectorAll<HTMLAnchorElement>(SEL.thumbnailLink)) {
       const existing = thumb.querySelector<HTMLButtonElement>(`:scope > .${BOOKMARK_BUTTON}`);
-      if (!enabled) {
+      // The home feed is hidden while the home page is off; its thumbnails get no buttons.
+      if (!enabled || (homeOff && thumb.closest(SEL.homeBrowse))) {
         existing?.remove();
         continue;
       }

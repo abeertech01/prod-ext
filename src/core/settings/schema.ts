@@ -20,6 +20,8 @@ export interface AllowListEntry extends ChannelRef {
   addedAt: number;
 }
 
+export type HomeMode = 'mixed' | 'only' | 'off';
+
 export type PlatformId = 'youtube' | 'facebook' | 'instagram';
 
 export interface Settings {
@@ -79,9 +81,10 @@ export interface Settings {
     folderIds: string[];
     /**
      * What the YouTube home page shows: `mixed` = 5 random bookmarked videos, then the
-     * usual filtered suggestions; `only` = bookmarked videos only, in batches.
+     * usual filtered suggestions; `only` = bookmarked videos only, in batches; `off` =
+     * nothing, a blank home page (chosen in settings only, never the default).
      */
-    homeMode: 'mixed' | 'only';
+    homeMode: HomeMode;
   };
 }
 

@@ -5,6 +5,7 @@ import { BookmarksSection } from './sections/Bookmarks';
 import { ChannelsSection } from './sections/Channels';
 import { FacebookSection } from './sections/Facebook';
 import { FilteringSection } from './sections/Filtering';
+import { HomePageSection } from './sections/HomePage';
 import { InstagramSection } from './sections/Instagram';
 import { KeywordsSection } from './sections/Keywords';
 import { ShortsSection } from './sections/Shorts';
@@ -20,6 +21,7 @@ const GROUPS = [
     site: 'YouTube',
     sections: [
       { id: 'shorts', label: 'Shorts', Component: ShortsSection },
+      { id: 'home', label: 'Home page', Component: HomePageSection },
       { id: 'filtering', label: 'Video filtering', Component: FilteringSection },
       { id: 'keywords', label: 'Keywords', Component: KeywordsSection },
       { id: 'channels', label: 'Trusted channels', Component: ChannelsSection },

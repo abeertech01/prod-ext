@@ -1,5 +1,5 @@
 import type { BookmarkFolderState, BookmarkTarget, BookmarkedVideo } from '@/core/messaging/protocol';
-import type { ChannelRef } from '@/core/settings/schema';
+import type { ChannelRef, HomeMode } from '@/core/settings/schema';
 import { createStore } from '../store';
 
 export type Surface = 'home' | 'related';
@@ -37,7 +37,8 @@ export interface BookmarkMenuState {
 export interface HomeBookmarksState {
   /** `unavailable`: the browser gives no bookmark access (Safari); nothing is shown. */
   status: 'loading' | 'ready' | 'unavailable';
-  mode: 'mixed' | 'only';
+  /** `off`: the home page is turned off in settings; nothing is shown or read. */
+  mode: HomeMode;
   /** Every bookmarked video, shuffled once per visit to the home page. */
   videos: BookmarkedVideo[];
   /** How many are on screen. */
@@ -79,6 +80,7 @@ export const overlayActions = {
   toggleBookmark: (_folder: BookmarkFolderState) => {},
   closeBookmarkMenu: () => {},
   openBookmarkSettings: () => {},
-  setHomeMode: (_mode: HomeBookmarksState['mode']) => {},
+  /** Only the two modes offered on the home page; "Nothing" is chosen in settings. */
+  setHomeMode: (_mode: Exclude<HomeMode, 'off'>) => {},
   loadMoreBookmarks: () => {},
 };

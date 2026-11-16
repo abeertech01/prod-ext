@@ -5,6 +5,7 @@ import { updateSettings } from '@/core/settings/storage';
 import { overlay, overlayActions, type HomeBookmarksState } from '@/ui/content/state';
 import { live, onContextChange } from './context';
 import type { PageInfo } from './page';
+import { setHomeOff } from './homeOff';
 import { ROOT_CLASS, setRootClass } from './pageStyles';
 
 /** Bookmarked videos above the suggestions in "Bookmarks + suggestions". */
@@ -18,7 +19,8 @@ const firstBatch = (mode: HomeBookmarksState['mode']) => (mode === 'only' ? BOOK
  * Bookmarked videos at the top of the home page. Each visit to the home page
  * shuffles every video in the chosen bookmark folders and shows the first 5
  * above the usual suggestions, or, in "Only bookmarks", batches of 24 in
- * place of the suggestions, with a "Load more" button.
+ * place of the suggestions, with a "Load more" button. With the home page
+ * turned off ("Nothing"), the page is left blank and the folders aren't read.
  */
 export function startHomeBookmarks(ctx: ContentScriptContext, getPage: () => PageInfo) {
   let request = 0;
@@ -34,12 +36,17 @@ export function startHomeBookmarks(ctx: ContentScriptContext, getPage: () => Pag
     const { mode, status, videos } = overlay.get().homeBookmarks;
     const nothing = status === 'unavailable' || (status === 'ready' && videos.length === 0);
     setRootClass(ROOT_CLASS.bookmarksOnly, mode === 'only' && !nothing);
+    setHomeOff(mode === 'off');
   }
 
   /** A new visit: read the folders again and pick a new random set. */
   async function refresh(): Promise<void> {
     const id = ++request;
     const mode = live.settings.bookmarks.homeMode;
+    if (mode === 'off') {
+      set({ status: 'ready', mode, videos: [], shown: 0 });
+      return applyMode();
+    }
     set({ status: 'loading', mode });
     applyMode();
     let videos: HomeBookmarksState['videos'] | null;
@@ -75,12 +82,20 @@ export function startHomeBookmarks(ctx: ContentScriptContext, getPage: () => Pag
       if (getPage().type === 'home') void refresh();
       return;
     }
-    if (homeMode !== overlay.get().homeBookmarks.mode) {
-      set({ mode: homeMode, shown: firstBatch(homeMode) });
-      applyMode();
+    const prev = overlay.get().homeBookmarks.mode;
+    if (homeMode === prev) return;
+    // Turned back on: the folders weren't read while the home page was off.
+    if (prev === 'off' || homeMode === 'off') {
+      if (getPage().type === 'home' || homeMode === 'off') void refresh();
+      else set({ mode: homeMode, status: 'loading', videos: [], shown: 0 });
+      return applyMode();
     }
+    set({ mode: homeMode, shown: firstBatch(homeMode) });
+    applyMode();
   });
   folderKey = live.settings.bookmarks.folderIds.join(',');
+  set({ mode: live.settings.bookmarks.homeMode });
+  applyMode();
 
   return {
     onNavigate(next: PageInfo, prev: PageInfo | null) {

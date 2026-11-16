@@ -49,6 +49,11 @@ export async function loadContext(): Promise<() => void> {
   };
 }
 
+/** The home page is turned off ("Nothing"): none of the home page's rules run. */
+export function isHomeOff(): boolean {
+  return live.settings.bookmarks.homeMode === 'off';
+}
+
 export function onContextChange(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);

@@ -1,6 +1,7 @@
 import type { BookmarkedVideo } from '@/core/messaging/protocol';
 import { useStore } from '../store';
-import { overlay, overlayActions, type HomeBookmarksState } from './state';
+import type { HomeMode } from '@/core/settings/schema';
+import { overlay, overlayActions } from './state';
 
 /**
  * Class names for the bookmarked-videos section. It sits in YouTube's page itself
@@ -22,7 +23,8 @@ export const HB = {
   more: 'ff-hb-more',
 } as const;
 
-const MODES: { value: HomeBookmarksState['mode']; label: string }[] = [
+/** "Nothing" isn't offered here: turning the home page off takes a trip to settings. */
+const MODES: { value: Exclude<HomeMode, 'off'>; label: string }[] = [
   { value: 'mixed', label: 'Bookmarks + suggestions' },
   { value: 'only', label: 'Only bookmarks' },
 ];
@@ -60,6 +62,8 @@ function VideoCard({ video }: { video: BookmarkedVideo }) {
 /** Bookmarked videos at the top of the home page, with the switch between the two modes. */
 export function HomeBookmarks() {
   const state = useStore(overlay, (s) => s.homeBookmarks);
+  // The home page is turned off: no bookmarks and no buttons to switch back.
+  if (state.mode === 'off') return null;
   // Nothing to show (no bookmark access, or no YouTube videos in the folders): the home page is left as it is.
   if (state.status === 'unavailable' || (state.status === 'ready' && state.videos.length === 0)) return null;
   const { mode, videos, shown, status } = state;
